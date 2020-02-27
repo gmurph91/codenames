@@ -37,6 +37,7 @@
     cursor: pointer;
     border-radius: 10px;
     margin: 2px;
+    width: 100%
 }
 
 .picture img {

@@ -23,8 +23,11 @@ export default class App extends Component {
       black: "",
       text: '',
       chats: [],
+      chatID: "",
       welcome: true,
+      winner: false,
     };
+    this.handleTextChange = this.handleTextChange.bind(this);
   }
 
   welcome = () => {
@@ -37,24 +40,74 @@ export default class App extends Component {
 
 
   componentDidMount() {
-    this.welcome()
+
+  }
+
+  componentDidUpdate(){
+   this.checkWinner()
+  }
+
+  getChat = async () => {
+    if(this.state.chatID===""){
+    var timestamp = new Date().valueOf();
+    this.setState({
+      chatID: timestamp,
+    })}
+    await this.setState({})
     const pusher = new Pusher('462207fd95a0750caf6c', {
+      authEndpoint: 'https://gregapis.herokuapp.com/pusher/auth',
       cluster: 'us3',
       encrypted: true
     });
-    const channel = pusher.subscribe('chat');
+    const channel = pusher.subscribe(`private-${this.state.chatID}`);
     channel.bind('message', data => {
       this.setState({ chats: [...this.state.chats, data], test: '' });
-      
-      // if(data.json.has("flip")){
-      //   console.log("flip")
-      // }
-      // let flip = data.flip.name
-      // this.revealCard2(flip)
+        if ('flip' in data){
+          let flip = data.flip.name
+          this.revealCard2(flip)
+        }
+        if ('color' in data){
+          if(data.color === "red"){
+            let reduceOne = this.state.redCount - 1
+            this.setState({
+              redCount: reduceOne,
+            })
+          }
+          if(data.color === "blue"){
+            let reduceOne = this.state.blueCount - 1
+            this.setState({
+              blueCount: reduceOne,
+            })
+          }
+        }
       var elem = document.getElementById('chat');
       elem.scrollTop = elem.scrollHeight;
     });
-    this.handleTextChange = this.handleTextChange.bind(this);
+  }
+
+  checkWinner = () => {
+    if (this.state.blueCount === 0 && this.state.winner === false){
+      this.setState({
+        winner: true,
+      })
+      const payload = {
+        username: "System",
+        message: `Blue Wins!`,
+        id: this.state.chatID
+      };
+      axios.post('https://gregapis.herokuapp.com/message', payload);
+    }
+    if (this.state.redCount === 0 && this.state.winner === false){
+      this.setState({
+        winner: true,
+      })
+      const payload = {
+        username: "System",
+        message: `Red Wins!`,
+        id: this.state.chatID
+      };
+      axios.post('https://gregapis.herokuapp.com/message', payload);
+    }
   }
 
   handleTextChange(e) {
@@ -62,15 +115,32 @@ export default class App extends Component {
       if (e.keyCode === 13) {
         const payload = {
           username: this.state.username,
-          message: this.state.text
+          message: e.target.value,
+          id: this.state.chatID
         };
         axios.post('https://gregapis.herokuapp.com/message', payload);
         e.currentTarget.value = "";
+        console.log(payload)
       } else {
-        this.setState({ text: e.target.value });
       }
     } catch (err) {
       console.error(err);
+    }
+  }
+
+  codemaster = () => {
+    let redCount = this.state.red.length
+    let blueCount = this.state.blue.length
+    this.setState({
+      redCount: redCount,
+      blueCount: blueCount
+    })
+    if (this.state.codemaster === false){
+      document.getElementById("player").classList.remove("hide")
+      document.getElementById("codemaster").classList.add("hide")
+    } else if (this.state.codemaster === true){
+      document.getElementById("player").classList.add("hide")
+      document.getElementById("codemaster").classList.remove("hide")
     }
   }
 
@@ -94,7 +164,7 @@ export default class App extends Component {
       return word
     })
     await (this.setState({}))
-    for (let step = 0; step < 26; step++) {
+    for (let step = 0; step < 25; step++) {
       let onlyWords = this.state.onlyWords
       let word = onlyWords[Math.floor(Math.random() * onlyWords.length)]
       this.setState({ twentyFive: [...this.state.twentyFive, word] });
@@ -129,9 +199,6 @@ export default class App extends Component {
         copy.splice(index3, 1);
       }
     }
-    console.log(this.state.blue)
-    console.log(this.state.red)
-    console.log(this.state.black)
     try {
       const apiCall = await axios.post('https://gregapis.herokuapp.com/codenames/newgame', {
       joinCode: this.state.joinCode,
@@ -139,16 +206,18 @@ export default class App extends Component {
       red: this.state.red,
       blue: this.state.blue,
       black: this.state.black,
+      chatID: this.state.chatID
       })
       await apiCall
     } catch (err) {
       console.log(err)
   }
-  console.log("game saved!")
+  this.codemaster()
   }
 
   revealCard = (event) => {
     let name = event.currentTarget.dataset.name
+    let username = this.state.username
     let red = this.state.red
     let blue = this.state.blue
     let black = this.state.black
@@ -157,8 +226,10 @@ export default class App extends Component {
       document.getElementById(`${name}`).nextSibling.classList.add("hide")
       const payload = {
         username: "System",
-        message: `Clicked card "${name}," which was Red`,
-        flip: {name}
+        message: `${username} clicked card "${name}," which was Red`,
+        flip: {name},
+        color: "red",
+        id: this.state.chatID
       };
       axios.post('https://gregapis.herokuapp.com/message', payload);
     } else if (blue.includes(name)) {
@@ -166,8 +237,10 @@ export default class App extends Component {
       document.getElementById(`${name}`).nextSibling.classList.add("hide")
       const payload2 = {
         username: "System",
-        message: `Clicked card "${name}," which was Blue`,
-        flip: {name}
+        message: `${username} clicked card "${name}," which was Blue`,
+        flip: {name},
+        color: "blue",
+        id: this.state.chatID
       };
       axios.post('https://gregapis.herokuapp.com/message', payload2);
     } else if (black.includes(name)) {
@@ -175,8 +248,9 @@ export default class App extends Component {
       document.getElementById(`${name}`).nextSibling.classList.add("hide")
       const payload3 = {
         username: "System",
-        message: `Clicked card "${name}," which was Black.  Game Over!`,
-        flip: {name}
+        message: `${username} clicked card "${name}," which was Black.  Game Over!`,
+        flip: {name},
+        id: this.state.chatID
       };
       axios.post('https://gregapis.herokuapp.com/message', payload3);
     } else {
@@ -184,8 +258,9 @@ export default class App extends Component {
       document.getElementById(`${name}`).nextSibling.classList.add("hide")
       const payload4 = {
         username: "System",
-        message: `Clicked card "${name}," which was an Innocent Bystander.`,
-        flip: {name}
+        message: `${username} clicked card "${name}," which was an Innocent Bystander.`,
+        flip: {name},
+        id: this.state.chatID
       };
       axios.post('https://gregapis.herokuapp.com/message', payload4);
     }
@@ -235,7 +310,7 @@ export default class App extends Component {
     })
     await this.setState({})
     this.welcome()
-    
+    this.getChat()
   }
 
   joinGame = async () => {
@@ -247,9 +322,9 @@ export default class App extends Component {
         twentyFive: response.data.twentyFive,
         red: response.data.red,
         blue: response.data.blue,
-        black: response.data.black
+        black: response.data.black,
+        chatID: response.data.chatID
       })
-      console.log(this.state)
     } catch (err) {
       console.error(err);
     }
@@ -258,6 +333,8 @@ export default class App extends Component {
     })
     await this.setState({})
     this.welcome()
+    this.codemaster()
+    this.getChat()
   }
 
 
@@ -313,7 +390,17 @@ export default class App extends Component {
             </div>
           </div>
           <div className="information">
-            <h2>hello</h2>
+            <div id="codemaster" className="hide">
+            <h2>Codemaster</h2>
+            <p>Red cards: {this.state.red[0]}, {this.state.red[1]}, {this.state.red[2]}, {this.state.red[3]}, {this.state.red[4]}, {this.state.red[5]}, {this.state.red[6]}, {this.state.red[7]}, {this.state.red[8]}</p>
+            <p>Blue cards: {this.state.blue[0]}, {this.state.blue[1]}, {this.state.blue[2]}, {this.state.blue[3]}, {this.state.blue[4]}, {this.state.blue[5]}, {this.state.blue[6]}, {this.state.blue[7]}</p>
+            <p>Assassin: {this.state.black}</p>
+            </div>
+            <div id="player" className="hide">
+            <h2>Players</h2>
+            <p>Red remaining: {this.state.redCount}</p>
+            <p>Blue remaining: {this.state.blueCount}</p>
+            </div>
           </div>
         </div>
         <div id="welcome">
