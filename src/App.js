@@ -26,8 +26,14 @@ export default class App extends Component {
       chatID: "",
       welcome: true,
       winner: false,
+      width: 0,
+      height: 0,
+      who: ["red","blue"],
+      first: "",
     };
     this.handleTextChange = this.handleTextChange.bind(this);
+    this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
+    this.startover2 = this.startover2.bind(this);
   }
 
   welcome = () => {
@@ -40,11 +46,80 @@ export default class App extends Component {
 
 
   componentDidMount() {
-
+    this.updateWindowDimensions();
+    window.addEventListener('resize', this.updateWindowDimensions);
+    window.addEventListener('scroll', this.handleScroll);
+    this.handleResize()
   }
 
   componentDidUpdate(){
    this.checkWinner()
+   this.handleResize()
+   this.loading()
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.updateWindowDimensions);
+    window.removeEventListener('scroll', this.handleScroll);
+  }
+
+  loading = () => {
+    var element = document.getElementById("loadingIcon")
+    if (this.state.loading) {
+      element.classList.remove("hide")
+      document.getElementById("board").classList.add("hide")
+    document.getElementById("chatbox").classList.add("hide")
+    document.getElementById("infobox").classList.add("hide")
+    } else {
+      element.classList.add("hide")
+      document.getElementById("board").classList.remove("hide")
+    document.getElementById("chatbox").classList.remove("hide")
+    document.getElementById("infobox").classList.remove("hide")
+    }
+  }
+
+  updateWindowDimensions() {
+    this.setState({ width: window.innerWidth, height: window.innerHeight });
+  }
+
+  handleResize = () => {
+    let width = this.state.width
+    let board = document.getElementById("board");
+    let chat = document.getElementById("chatbox");
+    let information = document.getElementById("infobox");
+    let word = document.querySelectorAll(".word")
+    if (width <=600){
+      board.classList.add("full");
+      chat.classList.add("relative");
+       information.classList.add("relative");
+      for (var i = 0; i < word.length; i++) {
+        word[i].classList.add("smaller")
+        word[i].classList.remove("small")
+    }}
+    if (width >600 && width <=750){
+      board.classList.add("full");
+      chat.classList.add("relative");
+      information.classList.add("relative");
+      for (var i2 = 0; i2 < word.length; i2++) {
+        word[i2].classList.add("small")
+        word[i2].classList.remove("smaller")
+    }} 
+    if (width >750 && width <= 1000) {
+      board.classList.add("full");
+      chat.classList.add("relative");
+      information.classList.add("relative");
+      for (var i3 = 0; i3 < word.length; i3++) {
+        word[i3].classList.remove("small")
+        word[i3].classList.remove("smaller")
+    }} 
+    else if (width>1000) { 
+      board.classList.remove("full");
+      chat.classList.remove("relative");
+      information.classList.remove("relative");
+      for (var i4 = 0; i4 < word.length; i4++) {
+        word[i4].classList.remove("small")
+        word[i4].classList.remove("smaller")
+    }} 
   }
 
   getChat = async () => {
@@ -66,6 +141,9 @@ export default class App extends Component {
           let flip = data.flip.name
           this.revealCard2(flip)
         }
+        if ('startover' in data){
+          this.startover2(data.startover)
+        }
         if ('color' in data){
           if(data.color === "red"){
             let reduceOne = this.state.redCount - 1
@@ -86,7 +164,7 @@ export default class App extends Component {
   }
 
   checkWinner = () => {
-    if (this.state.blueCount === 0 && this.state.winner === false){
+    if (this.state.blueCount === 0 && this.state.winner === false && this.state.codemaster=== true){
       this.setState({
         winner: true,
       })
@@ -97,7 +175,7 @@ export default class App extends Component {
       };
       axios.post('https://gregapis.herokuapp.com/message', payload);
     }
-    if (this.state.redCount === 0 && this.state.winner === false){
+    if (this.state.redCount === 0 && this.state.winner === false&& this.state.codemaster=== true){
       this.setState({
         winner: true,
       })
@@ -116,15 +194,15 @@ export default class App extends Component {
         const payload = {
           username: this.state.username,
           message: e.target.value,
+          team: this.state.team,
           id: this.state.chatID
         };
         axios.post('https://gregapis.herokuapp.com/message', payload);
         e.currentTarget.value = "";
-        console.log(payload)
       } else {
       }
     } catch (err) {
-      console.error(err);
+      console.log(err);
     }
   }
 
@@ -141,7 +219,18 @@ export default class App extends Component {
     } else if (this.state.codemaster === true){
       document.getElementById("player").classList.add("hide")
       document.getElementById("codemaster").classList.remove("hide")
+       this.state.red.map((word, i) => {
+      document.getElementById(`${word}`).nextSibling.classList.add("codemasterRed")
+      return word
+    })
+    this.state.blue.map((word, i) => {
+      document.getElementById(`${word}`).nextSibling.classList.add("codemasterBlue")
+      return word
+    })
     }
+    this.setState({
+      loading: false,
+    })
   }
 
 
@@ -152,7 +241,7 @@ export default class App extends Component {
         words: await response.data,
       })
     } catch (err) {
-      console.error(err);
+      console.log(err);
     }
     this.getWord()
   }
@@ -164,6 +253,12 @@ export default class App extends Component {
       return word
     })
     await (this.setState({}))
+    for (let step = 0; step < 1; step++) {
+      let whoFirst = this.state.who
+      let first = whoFirst[Math.floor(Math.random() * whoFirst.length)]
+      console.log(first)
+      this.setState({ first: first});
+    }
     for (let step = 0; step < 25; step++) {
       let onlyWords = this.state.onlyWords
       let word = onlyWords[Math.floor(Math.random() * onlyWords.length)]
@@ -174,7 +269,8 @@ export default class App extends Component {
       }
     }
     let twentyFive = this.state.twentyFive
-    let copy = [...twentyFive];
+     let copy = [...twentyFive];
+    if(this.state.first === "red"){
     for (let step = 0; step < 9; step++) {
       let red = copy[Math.floor(Math.random() * copy.length)]
       this.setState({ red: [...this.state.red, red] });
@@ -190,7 +286,23 @@ export default class App extends Component {
       if (index2 > -1) {
         copy.splice(index2, 1);
       }
-    }
+    }} else {
+      for (let step = 0; step < 8; step++) {
+        let red = copy[Math.floor(Math.random() * copy.length)]
+        this.setState({ red: [...this.state.red, red] });
+        const index = copy.indexOf(red);
+        if (index > -1) {
+          copy.splice(index, 1);
+        }
+      }
+      for (let step = 0; step < 9; step++) {
+        let blue = copy[Math.floor(Math.random() * copy.length)]
+        this.setState({ blue: [...this.state.blue, blue] });
+        const index2 = copy.indexOf(blue);
+        if (index2 > -1) {
+          copy.splice(index2, 1);
+        }
+    }}
     for (let step = 0; step < 1; step++) {
       let black = copy[Math.floor(Math.random() * copy.length)]
       this.setState({ black: black });
@@ -223,6 +335,7 @@ export default class App extends Component {
     let black = this.state.black
     if (red.includes(name)) {
       document.getElementById(`${name}`).src = 'red.jpg'
+      document.getElementById(`${name}`).classList.add("animation")
       document.getElementById(`${name}`).nextSibling.classList.add("hide")
       const payload = {
         username: "System",
@@ -234,6 +347,7 @@ export default class App extends Component {
       axios.post('https://gregapis.herokuapp.com/message', payload);
     } else if (blue.includes(name)) {
       document.getElementById(`${name}`).src = 'blue.jpg'
+      document.getElementById(`${name}`).classList.add("animation")
       document.getElementById(`${name}`).nextSibling.classList.add("hide")
       const payload2 = {
         username: "System",
@@ -245,6 +359,7 @@ export default class App extends Component {
       axios.post('https://gregapis.herokuapp.com/message', payload2);
     } else if (black.includes(name)) {
       document.getElementById(`${name}`).src = 'black.jpg'
+      document.getElementById(`${name}`).classList.add("animation")
       document.getElementById(`${name}`).nextSibling.classList.add("hide")
       const payload3 = {
         username: "System",
@@ -255,6 +370,7 @@ export default class App extends Component {
       axios.post('https://gregapis.herokuapp.com/message', payload3);
     } else {
       document.getElementById(`${name}`).src = 'gray.jpg'
+      document.getElementById(`${name}`).classList.add("animation")
       document.getElementById(`${name}`).nextSibling.classList.add("hide")
       const payload4 = {
         username: "System",
@@ -304,44 +420,147 @@ export default class App extends Component {
   
 
   newGame = async () => {
+    let username = this.state.username
+    let joinCode = this.state.joinCode
+    let team = this.state.team
+    if(username === "" || joinCode === "" || team === ""){
+      alert("Please fill out all fields")
+    } else {
     this.getWords()
     this.setState({
       welcome: false,
+      loading: true,
     })
     await this.setState({})
     this.welcome()
     this.getChat()
-  }
+  }}
 
   joinGame = async () => {
+    let username = this.state.username
     let joinCode = this.state.joinCode
+    let team = this.state.team
+    if(username === "" || joinCode === "" || team === ""){
+      alert("Please fill out all fields")
+    } else {
     try {
       const response = await axios.get(`https://gregapis.herokuapp.com/codenames/savedgame/${joinCode}`);
       await response
+      if(response.data !== ""){
       this.setState({
         twentyFive: response.data.twentyFive,
         red: response.data.red,
         blue: response.data.blue,
         black: response.data.black,
-        chatID: response.data.chatID
+        chatID: response.data.chatID,
+        welcome: false,
+        loading: true,
       })
-    } catch (err) {
-      console.error(err);
+      await this.setState({})
+      this.welcome()
+      this.codemaster()
+      this.getChat()
+      const payload = {
+        username: "System",
+        message: `${this.state.username} joined the game.`,
+        id: this.state.chatID
+      };
+      axios.post('https://gregapis.herokuapp.com/message', payload);
     }
+      else {alert("Unable to join game.  Check your join code and try again")}
+    } catch (err) {
+      console.log(err)
+    }}
+  }
+
+  startover2 = async (joinCode) => {
+    let cards = document.querySelectorAll(".thumbnail")
     this.setState({
-      welcome: false,
+      joinCode: joinCode,
+    words: [],
+    onlyWords: [],
+    twentyFive: [],
+    red: [],
+    blue: [],
+    black: "",
+    winner: false,
     })
     await this.setState({})
-    this.welcome()
-    this.codemaster()
-    this.getChat()
+    for (var i = 0; i < cards.length; i++) {
+      cards[i].src = 'card.jpg'
+      cards[i].nextSibling.classList.remove("hide")
+  }
+      const response = await axios.get(`https://gregapis.herokuapp.com/codenames/savedgame/${joinCode}`);
+      await response
+      if(response.data !== ""){
+      this.setState({
+        twentyFive: response.data.twentyFive,
+        red: response.data.red,
+        blue: response.data.blue,
+        black: response.data.black,
+        chatID: response.data.chatID,
+        welcome: false,
+      })
+      await this.setState({})
+      this.codemaster()
+    } else {
+      setTimeout(this.startover3(joinCode), 5000);
+    }
+  }
+
+  startover3 = async (joinCode) => {
+    const response = await axios.get(`https://gregapis.herokuapp.com/codenames/savedgame/${joinCode}`);
+      await response
+      if(response.data !== ""){
+      this.setState({
+        twentyFive: response.data.twentyFive,
+        red: response.data.red,
+        blue: response.data.blue,
+        black: response.data.black,
+        chatID: response.data.chatID,
+        welcome: false,
+      })
+      await this.setState({})
+      this.codemaster()
+  }}
+  
+
+  startOver = async () => {
+    let timestamp = String(new Date().valueOf())
+    let username = this.state.username
+      this.setState({
+        loading: true,
+        joinCode: timestamp,
+      words: [],
+      onlyWords: [],
+      twentyFive: [],
+      red: [],
+      blue: [],
+      black: "",
+      winner: false,
+      first: "", 
+      })
+      await this.setState({})
+    const payload = {
+      username: "System",
+      message: `${username} started a new game!`,
+      startover: timestamp,
+      id: this.state.chatID
+    };
+    axios.post('https://gregapis.herokuapp.com/message', payload);
+    this.getWords()
   }
 
 
   render() {
     return (
-      <div className="App">
-        <div className="board">
+      <div className="App" id="app">
+        <div className="header">
+          <p>Join Code: {this.state.joinCode}</p>
+          <h2>Codenames</h2>
+          <button onClick={this.startOver}>New Game</button>
+        </div>
+        <div className="board hide" id="board">
           <div className="row">
             <Card word={this.state.twentyFive[0]} selectHandler={this.revealCard} />
             <Card word={this.state.twentyFive[1]} selectHandler={this.revealCard} />
@@ -377,7 +596,7 @@ export default class App extends Component {
             <Card word={this.state.twentyFive[23]} selectHandler={this.revealCard} />
             <Card word={this.state.twentyFive[24]} selectHandler={this.revealCard} />
           </div>
-          <div className="chat">
+          <div className="chat hide" id="chatbox">
             <h2>Chat</h2>
             <div className="chatList" id="chat">
               <ChatList chats={this.state.chats} />
@@ -389,15 +608,15 @@ export default class App extends Component {
               />
             </div>
           </div>
-          <div className="information">
+          <div className="information hide" id="infobox">
             <div id="codemaster" className="hide">
-            <h2>Codemaster</h2>
+            <h2>{this.state.team} Codemaster</h2>
             <p>Red cards: {this.state.red[0]}, {this.state.red[1]}, {this.state.red[2]}, {this.state.red[3]}, {this.state.red[4]}, {this.state.red[5]}, {this.state.red[6]}, {this.state.red[7]}, {this.state.red[8]}</p>
             <p>Blue cards: {this.state.blue[0]}, {this.state.blue[1]}, {this.state.blue[2]}, {this.state.blue[3]}, {this.state.blue[4]}, {this.state.blue[5]}, {this.state.blue[6]}, {this.state.blue[7]}</p>
             <p>Assassin: {this.state.black}</p>
             </div>
             <div id="player" className="hide">
-            <h2>Players</h2>
+            <h2>{this.state.team} Team</h2>
             <p>Red remaining: {this.state.redCount}</p>
             <p>Blue remaining: {this.state.blueCount}</p>
             </div>
@@ -437,6 +656,7 @@ export default class App extends Component {
             </form>
             </div>
         </div>
+        <img id="loadingIcon" src="loading.gif" alt="loading" />
       </div>
     )
   }

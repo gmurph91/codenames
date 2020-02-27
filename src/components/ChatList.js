@@ -4,7 +4,7 @@ export default ({ chats }) => (
     {chats.map(chat => {
       return (
         <div>
-              <div className={`chatMessage ${chat.username}`}>
+              <div className={`chatMessage ${chat.username} ${chat.team}`}>
                 <div key={chat.id} className="box">
                   <p className={chat.username}>
                     <strong>{chat.username}:</strong>
