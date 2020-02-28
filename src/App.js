@@ -180,7 +180,7 @@ export default class App extends Component {
   }
 
   checkWinner = () => {
-    if (this.state.blueCount === 0 && this.state.winner === false && this.state.codemaster=== true){
+    if (this.state.blueCount === 0 && this.state.winner === false && this.state.codemaster=== true && this.state.team=== "blue"){
       this.setState({
         winner: true,
       })
@@ -191,7 +191,7 @@ export default class App extends Component {
       };
       axios.post('https://gregapis.herokuapp.com/message', payload);
     }
-    if (this.state.redCount === 0 && this.state.winner === false&& this.state.codemaster=== true){
+    if (this.state.redCount === 0 && this.state.winner === false&& this.state.codemaster=== true && this.state.team=== "red"){
       this.setState({
         winner: true,
       })
@@ -363,12 +363,13 @@ export default class App extends Component {
   revealCard = (event) => {
     try{
     let name = event.currentTarget.dataset.name
+    let master = this.state.codemaster
     let username = this.state.username
     let red = this.state.red
     let blue = this.state.blue
     let black = this.state.black
     let copy = this.state.copy
-    if (red.includes(name) && copy.includes(name)) {
+    if (red.includes(name) && copy.includes(name) && master === false) {
       document.getElementById(`${name}`).src = 'red.jpg'
       document.getElementById(`${name}`).classList.add("animation")
       document.getElementById(`${name}`).nextSibling.classList.add("hide")
@@ -385,7 +386,7 @@ export default class App extends Component {
         copy.splice(index, 1);
       }
       this.turn("red")
-    } else if (blue.includes(name) && copy.includes(name)) {
+    } else if (blue.includes(name) && copy.includes(name) && master === false) {
       document.getElementById(`${name}`).src = 'blue.jpg'
       document.getElementById(`${name}`).classList.add("animation")
       document.getElementById(`${name}`).nextSibling.classList.add("hide")
@@ -402,7 +403,7 @@ export default class App extends Component {
         copy.splice(index, 1);
       }
       this.turn("blue")
-    } else if (black.includes(name) && copy.includes(name)) {
+    } else if (black.includes(name) && copy.includes(name) && master === false) {
       document.getElementById(`${name}`).src = 'black.jpg'
       document.getElementById(`${name}`).classList.add("animation")
       document.getElementById(`${name}`).nextSibling.classList.add("hide")
@@ -416,7 +417,7 @@ export default class App extends Component {
       this.setState({
         copy: [],
       })
-    } else if(copy.includes(name)) {
+    } else if(copy.includes(name) && master === false) {
       document.getElementById(`${name}`).src = 'gray.jpg'
       document.getElementById(`${name}`).classList.add("animation")
       document.getElementById(`${name}`).nextSibling.classList.add("hide")
