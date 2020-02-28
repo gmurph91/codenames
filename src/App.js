@@ -627,11 +627,12 @@ export default class App extends Component {
   }
 
   copyTextToClipboard = (text) => {
+    try{
     navigator.clipboard.writeText(text).then(function() {
     }, function(err) {
       console.error('Async: Could not copy text: ', err);
     });
-  }
+  }catch(e){console.log(e)}}
 
   turn = (input) => {
     let turn = this.state.turn
