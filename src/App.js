@@ -31,6 +31,7 @@ export default class App extends Component {
       who: ["red","blue"],
       first: "",
       creator: "",
+      turn: "",
     };
     this.handleTextChange = this.handleTextChange.bind(this);
     this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
@@ -224,14 +225,26 @@ export default class App extends Component {
   codemaster = () => {
     let redCount = this.state.red.length
     let blueCount = this.state.blue.length
+    let red = this.state.red
+    let blue = this.state.blue
+    let black = this.state.black
+    let twentyFive = this.state.twentyFive
+    let copy = [...twentyFive]
     this.setState({
       redCount: redCount,
-      blueCount: blueCount
+      blueCount: blueCount,
+      copy: copy
     })
+    if (redCount > blueCount){
+      this.setState({
+        turn: "Red's turn"
+      })
+    } else {this.setState({turn: "Blue's turn"})}
     let word = document.querySelectorAll(".word")
       for (var i = 0; i < word.length; i++) {
         word[i].classList.remove("codemasterRed")
         word[i].classList.remove("codemasterBlue")
+        word[i].classList.remove("codemasterBlack")
     }
     if (this.state.codemaster === false){
       document.getElementById("player").classList.remove("hide")
@@ -239,14 +252,15 @@ export default class App extends Component {
     } else if (this.state.codemaster === true){
       document.getElementById("player").classList.add("hide")
       document.getElementById("codemaster").classList.remove("hide")
-       this.state.red.map((word, i) => {
+       red.map((word, i) => {
       document.getElementById(`${word}`).nextSibling.classList.add("codemasterRed")
       return word
     })
-    this.state.blue.map((word, i) => {
+    blue.map((word, i) => {
       document.getElementById(`${word}`).nextSibling.classList.add("codemasterBlue")
       return word
     })
+    document.getElementById(`${black}`).nextSibling.classList.add("codemasterBlack")
     }
     this.setState({
       loading: false,
@@ -353,52 +367,71 @@ export default class App extends Component {
     let red = this.state.red
     let blue = this.state.blue
     let black = this.state.black
-    if (red.includes(name)) {
+    let copy = this.state.copy
+    if (red.includes(name) && copy.includes(name)) {
       document.getElementById(`${name}`).src = 'red.jpg'
       document.getElementById(`${name}`).classList.add("animation")
       document.getElementById(`${name}`).nextSibling.classList.add("hide")
       const payload = {
         username: "System",
-        message: `${username} clicked card "${name}," which was Red`,
+        message: `${username} clicked "${name}," which was Red`,
         flip: {name},
         color: "red",
         id: this.state.chatID
       };
       axios.post('https://gregapis.herokuapp.com/message', payload);
-    } else if (blue.includes(name)) {
+      const index = copy.indexOf(name);
+      if (index > -1) {
+        copy.splice(index, 1);
+      }
+      this.turn("red")
+    } else if (blue.includes(name) && copy.includes(name)) {
       document.getElementById(`${name}`).src = 'blue.jpg'
       document.getElementById(`${name}`).classList.add("animation")
       document.getElementById(`${name}`).nextSibling.classList.add("hide")
       const payload2 = {
         username: "System",
-        message: `${username} clicked card "${name}," which was Blue`,
+        message: `${username} clicked "${name}," which was Blue`,
         flip: {name},
         color: "blue",
         id: this.state.chatID
       };
       axios.post('https://gregapis.herokuapp.com/message', payload2);
-    } else if (black.includes(name)) {
+      const index = copy.indexOf(name);
+      if (index > -1) {
+        copy.splice(index, 1);
+      }
+      this.turn("blue")
+    } else if (black.includes(name) && copy.includes(name)) {
       document.getElementById(`${name}`).src = 'black.jpg'
       document.getElementById(`${name}`).classList.add("animation")
       document.getElementById(`${name}`).nextSibling.classList.add("hide")
       const payload3 = {
         username: "System",
-        message: `${username} clicked card "${name}," which was Black.  Game Over!`,
+        message: `${username} clicked "${name}," which was Black.  Game Over!`,
         flip: {name},
         id: this.state.chatID
       };
       axios.post('https://gregapis.herokuapp.com/message', payload3);
-    } else {
+      this.setState({
+        copy: [],
+      })
+    } else if(copy.includes(name)) {
       document.getElementById(`${name}`).src = 'gray.jpg'
       document.getElementById(`${name}`).classList.add("animation")
       document.getElementById(`${name}`).nextSibling.classList.add("hide")
       const payload4 = {
         username: "System",
-        message: `${username} clicked card "${name}," which was an Innocent Bystander.`,
+        message: `${username} clicked "${name}," which was an Innocent Bystander.`,
         flip: {name},
         id: this.state.chatID
       };
       axios.post('https://gregapis.herokuapp.com/message', payload4);
+      const index = copy.indexOf(name);
+      if (index > -1) {
+        copy.splice(index, 1);
+      }
+      this.turn("end")
     }
   } catch(e){console.log(e)}}
 
@@ -406,18 +439,37 @@ export default class App extends Component {
     let red = this.state.red
     let blue = this.state.blue
     let black = this.state.black
-    if (red.includes(name)) {
+    let copy = this.state.copy
+    if (red.includes(name) && copy.includes(name)) {
       document.getElementById(`${name}`).src = 'red.jpg'
       document.getElementById(`${name}`).nextSibling.classList.add("hide")
-    } else if (blue.includes(name)) {
+      const index = copy.indexOf(name);
+      if (index > -1) {
+        copy.splice(index, 1);
+      }
+      this.turn("red")
+    } else if (blue.includes(name) && copy.includes(name)) {
       document.getElementById(`${name}`).src = 'blue.jpg'
       document.getElementById(`${name}`).nextSibling.classList.add("hide")
-    } else if (black.includes(name)) {
+      const index = copy.indexOf(name);
+      if (index > -1) {
+        copy.splice(index, 1);
+      }
+      this.turn("blue")
+    } else if (black.includes(name) && copy.includes(name)) {
       document.getElementById(`${name}`).src = 'black.jpg'
       document.getElementById(`${name}`).nextSibling.classList.add("hide")
-    } else {
+      this.setState({
+        copy: [],
+      })
+    } else if(copy.includes(name)) {
       document.getElementById(`${name}`).src = 'gray.jpg'
       document.getElementById(`${name}`).nextSibling.classList.add("hide")
+      const index = copy.indexOf(name);
+      if (index > -1) {
+        copy.splice(index, 1);
+      }
+      this.turn("end")
     }
   }
 
@@ -494,7 +546,7 @@ export default class App extends Component {
   }
 
   startover2 = async (joinCode) => {
-    if(this.state.creator === joinCode){console.log("You started the game")} else {
+    if(this.state.creator === joinCode){} else {
     this.setState({
       joinCode: joinCode,
     words: [],
@@ -570,12 +622,48 @@ export default class App extends Component {
     this.getWords()
   }
 
+  copy = () => {
+    this.copyTextToClipboard(`${this.state.joinCode}`);
+  }
+
+  copyTextToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(function() {
+    }, function(err) {
+      console.error('Async: Could not copy text: ', err);
+    });
+  }
+
+  turn = (input) => {
+    let turn = this.state.turn
+    if (turn === "Red's turn" && input === "blue"){
+      this.setState({
+        turn: "Blue's turn"
+      })
+    } 
+    if (turn === "Red's turn" && input === "end"){
+      this.setState({
+        turn: "Blue's turn"
+      })
+    } 
+    if (turn === "Blue's turn" && input === "red"){
+      this.setState({
+        turn: "Red's turn"
+      })
+    } 
+    if (turn === "Blue's turn" && input === "end"){
+      this.setState({
+        turn: "Red's turn"
+      })
+    } 
+    else {}
+  }
+
 
   render() {
     return (
       <div className="App" id="app">
         <div className="header">
-          <p>Join Code: {this.state.joinCode}</p>
+          <p>Join Code: {this.state.joinCode}<img src="/copy.png" onClick={this.copy} alt="copy"/></p>
           <h2>Codenames</h2>
           <button onClick={this.startOver}>New Game</button>
         </div>
@@ -630,12 +718,14 @@ export default class App extends Component {
           <div className="information hide" id="infobox">
             <div id="codemaster" className="hide">
             <h2>{this.state.team} Codemaster</h2>
+            <p>{this.state.turn}</p>
             <p>Red cards: {this.state.red[0]}, {this.state.red[1]}, {this.state.red[2]}, {this.state.red[3]}, {this.state.red[4]}, {this.state.red[5]}, {this.state.red[6]}, {this.state.red[7]}, {this.state.red[8]}</p>
-            <p>Blue cards: {this.state.blue[0]}, {this.state.blue[1]}, {this.state.blue[2]}, {this.state.blue[3]}, {this.state.blue[4]}, {this.state.blue[5]}, {this.state.blue[6]}, {this.state.blue[7]}</p>
+            <p>Blue cards: {this.state.blue[0]}, {this.state.blue[1]}, {this.state.blue[2]}, {this.state.blue[3]}, {this.state.blue[4]}, {this.state.blue[5]}, {this.state.blue[6]}, {this.state.blue[7]}, {this.state.blue[8]}</p>
             <p>Assassin: {this.state.black}</p>
             </div>
             <div id="player" className="hide">
             <h2>{this.state.team} Team</h2>
+            <p>{this.state.turn}</p>
             <p>Red remaining: {this.state.redCount}</p>
             <p>Blue remaining: {this.state.blueCount}</p>
             </div>

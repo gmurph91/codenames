@@ -359,15 +359,39 @@ input[type='radio'][name='buttonGroup2']:checked + label { background-color:#3B9
 }
 
 .header p {
+  display: flex;
+  flex-direction: row;
   margin-left: 10px;
 }
 
+.header img {
+  align-self: center;
+    padding: 10px;
+    border: 1px solid #CBBDB0;
+}
+
+.header img:hover {
+  border:1px solid lightgray;
+}
+
+
 .codemasterRed {
   color: #C42E16;
+  font-weight: bold;
 }
 
 .codemasterBlue {
   color:#025F9B;
+  font-weight: bold;
+}
+
+.codemasterBlack {
+  font-weight: bold;
+}
+
+.codemasterBlack:after {
+  content: url("/death.png");
+  margin-left: 4px
 }
 
 .animation {
