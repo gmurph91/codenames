@@ -82,6 +82,11 @@
   visibility: hidden;
 }
 
+.hide2 {
+  display: none;
+  visibility: hidden;
+}
+
 .chatMessage {
   position: relative;
     border-radius: 25px;

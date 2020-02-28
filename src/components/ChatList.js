@@ -1,9 +1,9 @@
 import React from "react";
 export default ({ chats }) => (
   <div>
-    {chats.map(chat => {
+    {chats.map((chat, i) => {
       return (
-        <div>
+        <div key={i}>
               <div className={`chatMessage ${chat.username} ${chat.team}`}>
                 <div key={chat.id} className="box">
                   <p className={chat.username}>

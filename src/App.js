@@ -30,6 +30,7 @@ export default class App extends Component {
       height: 0,
       who: ["red","blue"],
       first: "",
+      creator: "",
     };
     this.handleTextChange = this.handleTextChange.bind(this);
     this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
@@ -38,9 +39,14 @@ export default class App extends Component {
 
   welcome = () => {
     if (this.state.welcome === true) {
-      document.getElementById("welcome")
+      document.getElementById("board").classList.add("hide2")
+      document.getElementById("chatbox").classList.add("hide2")
+      document.getElementById("infobox").classList.add("hide2")
     } else {
       document.getElementById("welcome").classList.add("hide")
+      document.getElementById("board").classList.remove("hide2")
+      document.getElementById("chatbox").classList.remove("hide2")
+      document.getElementById("infobox").classList.remove("hide2")
     }
   }
 
@@ -50,6 +56,7 @@ export default class App extends Component {
     window.addEventListener('resize', this.updateWindowDimensions);
     window.addEventListener('scroll', this.handleScroll);
     this.handleResize()
+    this.welcome()
   }
 
   componentDidUpdate(){
@@ -142,7 +149,15 @@ export default class App extends Component {
           this.revealCard2(flip)
         }
         if ('startover' in data){
-          this.startover2(data.startover)
+          this.setState({loading:true})
+          let cards = document.querySelectorAll(".thumbnail")
+    for (var i = 0; i < cards.length; i++) {
+      cards[i].src = 'card.jpg'
+      cards[i].nextSibling.classList.remove("hide")
+  }
+          setTimeout(() => {
+            this.startover2(data.startover)
+          }, 5000);
         }
         if ('color' in data){
           if(data.color === "red"){
@@ -213,6 +228,11 @@ export default class App extends Component {
       redCount: redCount,
       blueCount: blueCount
     })
+    let word = document.querySelectorAll(".word")
+      for (var i = 0; i < word.length; i++) {
+        word[i].classList.remove("codemasterRed")
+        word[i].classList.remove("codemasterBlue")
+    }
     if (this.state.codemaster === false){
       document.getElementById("player").classList.remove("hide")
       document.getElementById("codemaster").classList.add("hide")
@@ -256,7 +276,6 @@ export default class App extends Component {
     for (let step = 0; step < 1; step++) {
       let whoFirst = this.state.who
       let first = whoFirst[Math.floor(Math.random() * whoFirst.length)]
-      console.log(first)
       this.setState({ first: first});
     }
     for (let step = 0; step < 25; step++) {
@@ -328,6 +347,7 @@ export default class App extends Component {
   }
 
   revealCard = (event) => {
+    try{
     let name = event.currentTarget.dataset.name
     let username = this.state.username
     let red = this.state.red
@@ -380,7 +400,7 @@ export default class App extends Component {
       };
       axios.post('https://gregapis.herokuapp.com/message', payload4);
     }
-  }
+  } catch(e){console.log(e)}}
 
   revealCard2 = (name) => {
     let red = this.state.red
@@ -474,7 +494,7 @@ export default class App extends Component {
   }
 
   startover2 = async (joinCode) => {
-    let cards = document.querySelectorAll(".thumbnail")
+    if(this.state.creator === joinCode){console.log("You started the game")} else {
     this.setState({
       joinCode: joinCode,
     words: [],
@@ -486,10 +506,6 @@ export default class App extends Component {
     winner: false,
     })
     await this.setState({})
-    for (var i = 0; i < cards.length; i++) {
-      cards[i].src = 'card.jpg'
-      cards[i].nextSibling.classList.remove("hide")
-  }
       const response = await axios.get(`https://gregapis.herokuapp.com/codenames/savedgame/${joinCode}`);
       await response
       if(response.data !== ""){
@@ -504,8 +520,10 @@ export default class App extends Component {
       await this.setState({})
       this.codemaster()
     } else {
-      setTimeout(this.startover3(joinCode), 5000);
-    }
+      setTimeout(() => {
+        this.startover3(joinCode)
+      }, 5000);
+    }}
   }
 
   startover3 = async (joinCode) => {
@@ -522,7 +540,7 @@ export default class App extends Component {
       })
       await this.setState({})
       this.codemaster()
-  }}
+  } else {console.log("Failed to join game.  Please refresh the page and join manually.")}}
   
 
   startOver = async () => {
@@ -539,6 +557,7 @@ export default class App extends Component {
       black: "",
       winner: false,
       first: "", 
+      creator: timestamp,
       })
       await this.setState({})
     const payload = {
